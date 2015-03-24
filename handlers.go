@@ -74,7 +74,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update the github status
-	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url+"console"); err != nil {
+	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
 		log.Error(err)
 	}
 
