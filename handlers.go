@@ -46,6 +46,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	if j.Build.Phase == "STARTED" {
 		state = "pending"
 		desc += " is running"
+		j.Build.Url += "console"
 	} else {
 
 		switch j.Build.Status {
