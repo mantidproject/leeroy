@@ -94,7 +94,7 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool 
 	}
 
 	for _, status := range statuses {
-		if status.Context == context && status.State == "success" {
+		if status.Context == context {
 			return true
 		}
 	}
