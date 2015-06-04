@@ -174,7 +174,7 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	for _, sha := range shas {
 
 		// update the github status
-		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl); err != nil {
+		if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl+"/job/"+build.Job); err != nil {
 			return err
 		}
 
