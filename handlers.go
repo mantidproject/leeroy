@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/jfrazelle/leeroy/jenkins"
+	"github.com/rosswhitfield/leeroy/jenkins"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
