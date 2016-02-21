@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
@@ -79,6 +80,22 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Error(err)
 	}
 
+	if state == "success" {
+		for _, DownstreamBuild := range build.DownstreamBuilds {
+			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild,j.Build.Parameters.GitBaseRepo)
+			if err != nil {
+				log.Error(err)
+				w.WriteHeader(500)
+				return
+			}
+			pr_number, _ := strconv.Atoi(j.Build.Parameters.PR)
+			if err := config.scheduleJenkinsBuild(BuildDownstream.Repo, pr_number, BuildDownstream); err != nil {
+				log.Error(err)
+				w.WriteHeader(500)
+			}
+		}
+	}
+
 	return
 }
 
@@ -134,9 +151,11 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
-		if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
-			log.Error(err)
-			w.WriteHeader(500)
+		if ! build.Downstream {
+			if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
+				log.Error(err)
+				w.WriteHeader(500)
+			}
 		}
 	}
 

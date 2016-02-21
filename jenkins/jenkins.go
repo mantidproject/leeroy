@@ -29,6 +29,7 @@ type JenkinsBuild struct {
 type JenkinsBuildParameters struct {
 	GitBaseRepo string `json:"GIT_BASE_REPO"`
 	GitSha      string `json:"GIT_SHA1"`
+	PR          string `json:"PR"`
 }
 
 type Request struct {
