@@ -193,6 +193,25 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	return nil
 }
 
+func (c Config) scheduleJenkinsDownstreamBuild(baseRepo string, headRepo string, number int, build Build, sha string) error {
+	// update the github status
+	if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl+"/job/"+build.Job); err != nil {
+		return err
+	}
+
+	// setup the jenkins client
+	j := &c.Jenkins
+	// setup the parameters
+	htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, number)
+	parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d", baseRepo, headRepo, sha, htmlUrl, number)
+	// schedule the build
+	if err := j.BuildWithParameters(build.Job, parameters); err != nil {
+		return fmt.Errorf("scheduling jenkins build failed: %v", err)
+	}
+
+	return nil
+}
+
 func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 	// parse git repo for username
 	// and repo name

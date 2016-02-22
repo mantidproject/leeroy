@@ -89,7 +89,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			pr_number, _ := strconv.Atoi(j.Build.Parameters.PR)
-			if err := config.scheduleJenkinsBuild(BuildDownstream.Repo, pr_number, BuildDownstream); err != nil {
+			if err := config.scheduleJenkinsDownstreamBuild(BuildDownstream.Repo, j.Build.Parameters.GitHeadRepo, pr_number, BuildDownstream, j.Build.Parameters.GitSha); err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
 			}
