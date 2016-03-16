@@ -99,8 +99,14 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool 
 
 	for _, status := range statuses {
 		if status.Context == context {
+			log.Debugf("Status found for %s context: %s state: %s", sha, status.Context, status.State)
 			return true
 		}
+	}
+
+	log.Debugf("Cron PR status for %s not found for %s", context, sha)
+	for _, status := range statuses {
+		log.Debugf("Statuses found for %s context: %s state: %s", sha, status.Context, status.State)
 	}
 
 	return false
@@ -244,6 +250,7 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 	}
 
 	for _, pr := range prs {
+		log.Debugf("Checking statuses for %s context: %s PR: %d", pr.Head.Sha, context, pr.Number)
 		if !hasStatus(gh, repo, pr.Head.Sha, context) {
 			nums = append(nums, pr.Number)
 		}

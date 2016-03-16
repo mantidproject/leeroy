@@ -241,6 +241,8 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Debugf("Received cron build notification for %s: %s", b.Repo, b.Context)
+
 	// get the build
 	build, err := config.getBuildByContextAndRepo(b.Context, b.Repo)
 	if err != nil {
@@ -259,6 +261,7 @@ func cronBuildHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, prNum := range nums {
 		// schedule the jenkins build
+		log.Debugf("Starting cron build for PR %d: %s", prNum, b.Context)
 		if err := config.scheduleJenkinsBuild(b.Repo, prNum, build); err != nil {
 			log.Error(err)
 		}
