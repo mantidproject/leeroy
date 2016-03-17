@@ -87,7 +87,11 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 }
 
 func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool {
-	statuses, err := gh.Statuses(repo, sha, &octokat.Options{})
+	statuses, err := gh.Statuses(repo, sha, &octokat.Options{
+		Params: map[string]string{
+		"per_page": "100",
+		},
+	})
 	if err != nil {
 		log.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
 		return false
