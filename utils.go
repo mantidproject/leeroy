@@ -87,7 +87,9 @@ func (c Config) updateGithubStatus(repoName, context, sha, state, desc, buildUrl
 }
 
 func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool {
-	statuses, err := gh.Statuses(repo, sha, &octokat.Options{})
+	statuses, err := gh.Statuses(repo, sha, &octokat.Options{
+		QueryParams: map[string]string{"per_page": "100"},
+	})
 	if err != nil {
 		log.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
 		return false
@@ -230,7 +232,7 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 
 	// get pull requests
 	prs, err := gh.PullRequests(repo, &octokat.Options{
-		Params: map[string]string{
+		QueryParams: map[string]string{
 			"state":    "open",
 			"per_page": "100",
 		},
