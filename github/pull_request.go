@@ -68,7 +68,7 @@ func (p *PullRequestContent) hasCppFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		if hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c", ".tpp", ".txx", ".h", ".hpp", ".hxx") {
+		if hasAny(strings.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c", ".tpp", ".txx", ".h", ".hpp", ".hxx") {
 			return true
 		}
 	}
@@ -82,7 +82,28 @@ func (p *PullRequestContent) containsPythonFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		if hasAny(string.HasSuffix, f.FileName, ".py") {
+		if hasAny(strings.HasSuffix, f.FileName, ".py") {
+			return true
+		}
+	}
+	return false
+}
+
+// FindComment finds a specific comment.
+func (p *PullRequestContent) FindComment(commentType, user string) *octokat.Comment {
+	for _, c := range p.comments {
+		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
+			return &c
+		}
+	}
+	return nil
+}
+
+// AlreadyCommented checks if the user has already commented.
+func (p *PullRequestContent) AlreadyCommented(commentType, user string) bool {
+	for _, c := range p.comments {
+		// if we already made the comment return nil
+		if strings.ToLower(c.User.Login) == user && strings.Contains(c.Body, commentType) {
 			return true
 		}
 	}
