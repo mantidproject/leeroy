@@ -23,13 +23,14 @@ func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 		logrus.Debugf("Found pr %d was not mergable, going to add comment", pr.Hook.Number)
 
 		// add a comment
-		comment := "Looks like we would not be able to merge this PR because of merge conflicts. Please rebase, fix conflicts, and force push to your branch."
+		comment := "Looks like we would not be able to merge this PR because of merge conflicts. Please fix conflicts, and push to your branch."
 		if err := g.addUniqueComment(pr.Repo, strconv.Itoa(pr.Hook.Number), comment, commentType, pr.Content); err != nil {
 			return mergeable, err
 		}
 
 		// set the status
-		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "docker/is-mergable", "This PR is not mergable, please fix conflicts.", "https://docs.docker.com/project/work-issue/"); err != nil {
+		// TODO for context do we want "mantid/is-mergable" or something else?
+		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "mantid/is-mergable", "This PR is not mergable, please fix conflicts.", "https://github.com/mantidproject/mantid/pulls/"); err != nil {
 			return mergeable, err
 		}
 
