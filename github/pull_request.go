@@ -61,8 +61,9 @@ func (p *PullRequestContent) IsOnlyDocsChanges() bool {
 	return true
 }
 
-// IsNonCodeOnly chacks if only non code files are modified.
-func (p *PullRequestContent) needsCppCheck() bool {
+// This can be used to check skipping clang format and
+// CPP check
+func (p *PullRequestContent) hasCppFiles() bool {
 	if len(p.files) == 0 {
 		return false
 	}
@@ -71,6 +72,20 @@ func (p *PullRequestContent) needsCppCheck() bool {
 	for _, f := range p.files {
 		if hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c",
 				  ".tpp", ".txx", ".h", ".hpp", ".hxx")
+			return true
+		}
+	}
+	return false
+}
+
+func (p *PullRequestContent) containsPythonFiles() bool {
+	if len(p.files) == 0 {
+		return false
+	}
+
+	// if there are any changed files not in docs/man/experimental dirs
+	for _, f := range p.files {
+		if hasAny(string.HasSuffix, f.FileName, ".py")
 			return true
 		}
 	}
