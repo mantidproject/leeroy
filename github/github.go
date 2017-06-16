@@ -39,7 +39,3 @@ func nameWithOwner(repo *octokat.Repository) octokat.Repo {
 		UserName: repo.Owner.Login,
 	}
 }
-
-func bot(user octokat.User) bool {
-	return user.Login == "GordonTheTurtle"
-}
