@@ -1,11 +1,9 @@
 package github
 
 import (
-	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 	"github.com/pkg/errors"
 )
@@ -70,10 +68,7 @@ func (p *PullRequestContent) hasCppFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		if hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c",
-				  ".tpp", ".txx", ".h", ".hpp", ".hxx")
-			return true
-		}
+		return hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c", ".tpp", ".txx", ".h", ".hpp", ".hxx")
 	}
 	return false
 }
@@ -85,9 +80,7 @@ func (p *PullRequestContent) containsPythonFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		if hasAny(string.HasSuffix, f.FileName, ".py")
-			return true
-		}
+		return hasAny(string.HasSuffix, f.FileName, ".py")
 	}
 	return false
 }

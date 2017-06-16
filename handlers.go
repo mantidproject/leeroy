@@ -10,6 +10,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 	"github.com/mantidproject/leeroy/jenkins"
+	"github.com/mantidproject/leeroy/github" 
+
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
