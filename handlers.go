@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/rosswhitfield/leeroy/jenkins"
+	"github.com/mantidproject/leeroy/jenkins"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,7 +82,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if state == "success" {
 		for _, DownstreamBuild := range build.DownstreamBuilds {
-			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild,j.Build.Parameters.GitBaseRepo)
+			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild, j.Build.Parameters.GitBaseRepo)
 			if err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
@@ -151,7 +151,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
-		if ! build.Downstream {
+		if !build.Downstream {
 			if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
