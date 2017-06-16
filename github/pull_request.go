@@ -68,7 +68,9 @@ func (p *PullRequestContent) hasCppFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		return hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c", ".tpp", ".txx", ".h", ".hpp", ".hxx")
+		if hasAny(string.HasSuffix, f.FileName, ".cpp", ".cxx", ".cc", "c++", ".c", ".tpp", ".txx", ".h", ".hpp", ".hxx") {
+			return true
+		}
 	}
 	return false
 }
@@ -80,7 +82,9 @@ func (p *PullRequestContent) containsPythonFiles() bool {
 
 	// if there are any changed files not in docs/man/experimental dirs
 	for _, f := range p.files {
-		return hasAny(string.HasSuffix, f.FileName, ".py")
+		if hasAny(string.HasSuffix, f.FileName, ".py") {
+			return true
+		}
 	}
 	return false
 }
