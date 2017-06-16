@@ -10,10 +10,10 @@ import (
 	"leeroy/github"
 	"leeroy/jenkins"
 
-        log "github.com/Sirupsen/logrus"
-        "github.com/Sirupsen/logrus"
+    log "github.com/Sirupsen/logrus"
+    "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-        "github.com/pkg/errors"
+    "github.com/pkg/errors"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -138,8 +138,6 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	baseRepo := fmt.Sprintf("%s/%s", pr.Base.Repo.Owner.Login, pr.Base.Repo.Name)
 
 	log.Infof("Received GitHub pull request notification for %s %d (%s): %s", baseRepo, pr.Number, pr.URL, prHook.Action)
-
-
 
 	// ignore everything we don't care about
 	if prHook.Action != "opened" && prHook.Action != "reopened" && prHook.Action != "synchronize" {
