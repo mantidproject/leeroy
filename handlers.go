@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 	"strconv"
+	"leeroy/github"
+	"leeroy/jenkins"
 
-	log "github.com/Sirupsen/logrus"
+    log "github.com/Sirupsen/logrus"
+    "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-	"github.com/rosswhitfield/leeroy/jenkins"
+    "github.com/pkg/errors"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +73,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// get the build
-	build, err := config.getBuildByJob(j.Name)
+        build, err := config.getBuildByJob(j.Name)
 	if err != nil {
 		log.Error(err)
 		return
@@ -82,8 +86,8 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 	if state == "success" {
 		for _, DownstreamBuild := range build.DownstreamBuilds {
-			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild,j.Build.Parameters.GitBaseRepo)
-			if err != nil {
+			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild, j.Build.Parameters.GitBaseRepo)
+		if err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
 				return
@@ -141,7 +145,42 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the builds
+        g := github.GitHub{
+                AuthToken: config.GHToken,
+                User:      config.GHUser,
+        }
+
+	attempt, totalAttempts := 1, 5
+        delay := time.Second
+retry:
+        pullRequest, err := g.LoadPullRequest(prHook)
+        if err != nil {
+               logrus.Errorf("Error loading the pull request (attempt %d/%d): %v", attempt, totalAttempts, err)
+               if attempt <= totalAttempts && errors.Cause(err).Error() == "Not Found" {
+                       time.Sleep(delay)
+                       attempt++
+                       delay *= 2
+                       goto retry
+               }
+               w.WriteHeader(500)
+               return
+        }
+
+        mergeable, err := g.IsMergeable(pullRequest)
+        if err != nil {
+             logrus.Errorf("Error checking if PR is mergeable: %v", err)
+	                w.WriteHeader(500)
+			                return
+					        }
+
+        // PR is not mergeable, so don't start the build
+        if !mergeable {
+               logrus.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+               w.WriteHeader(200)
+               return
+        }
+
+        // get the builds
 	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
 		log.Error(err)
@@ -151,7 +190,7 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 
 	// schedule the jenkins builds
 	for _, build := range builds {
-		if ! build.Downstream {
+		if !build.Downstream {
 			if err := config.scheduleJenkinsBuild(baseRepo, pr.Number, build); err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
