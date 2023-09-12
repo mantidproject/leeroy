@@ -115,7 +115,7 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 }
 
 
-func (c *Client) GetJobInstance(job string, pr_number string, sha string) (int, error) {
+func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, error) {
 	// set up the request
 	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%s\"]][action/parameter[name=\"GIT_SHA1\"][value=\"%s\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, pr_number, sha)
 	req, err := http.NewRequest("GET", url, nil)
