@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"encoding/xml"
+	"io/ioutil"
 )
 
 type Client struct {
@@ -35,6 +37,10 @@ type JenkinsBuildParameters struct {
 
 type Request struct {
 	Parameters []map[string]string `json:"parameter"`
+}
+
+type JobInstance struct {
+    Number int `xml:"build>number"`
 }
 
 // Sets the authentication for the Jenkins client
@@ -101,6 +107,72 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 
 	// check the status code
 	// it should be 201
+	if resp.StatusCode != 201 {
+		return fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
+	}
+
+	return nil
+}
+
+
+func (c *Client) GetJobInstance(job string, pr_number string, sha string) (int, error) {
+	// set up the request
+	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%s\"]][action/parameter[name=\"GIT_SHA1\"][value=\"%s\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, pr_number, sha)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	// add the auth - Not sure this will be needed for GET
+	req.SetBasicAuth(c.Username, c.Token)
+
+	// do the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+
+	// check the status code
+	// it should be 201
+	if resp.StatusCode != 201 {
+		return 0, fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	//parse response for job id
+	var jobInstance = &JobInstance{}
+	if err := xml.Unmarshal(body, &jobInstance); err != nil {
+		panic(err)
+	}
+
+	return jobInstance.Number, nil
+}
+
+func (c *Client) CancelJobInstance(job string, job_id int) error {
+	// set up the request
+	url := fmt.Sprintf("%s/job/%s/%s/stop", c.Baseurl, job, job_id)
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
+	if err != nil {
+		return err
+	}
+
+	// add the auth
+	req.SetBasicAuth(c.Username, c.Token)
+
+	// do the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	// check the status code
+	// it should be 201 - need to check this.
 	if resp.StatusCode != 201 {
 		return fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
 	}
