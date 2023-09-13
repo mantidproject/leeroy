@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"encoding/xml"
 	"io/ioutil"
+	log "github.com/Sirupsen/logrus"
+	"net/http/httputil"
 )
 
 type Client struct {
@@ -154,6 +156,8 @@ func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, err
 }
 
 func (c *Client) CancelJobInstance(job string, job_id int) error {
+	log.Infof("cancelling job instance, job: %s, job number: %v", job, job_id)
+
 	// set up the request
 	url := fmt.Sprintf("%s/job/%s/%s/stop", c.Baseurl, job, job_id)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
@@ -170,6 +174,12 @@ func (c *Client) CancelJobInstance(job string, job_id int) error {
 	if err != nil {
 		return err
 	}
+	if err != nil {
+        log.Fatal(err)
+    }
+
+	reqDump, err := httputil.DumpRequestOut(req, true)
+	fmt.Printf("REQUEST:\n%s", string(reqDump))
 
 	// check the status code
 	// it should be 201 - need to check this.
