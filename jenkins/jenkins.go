@@ -135,6 +135,13 @@ func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, err
 		return 0, err
 	}
 
+	reqDump, err := httputil.DumpRequestOut(req, true)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	fmt.Printf("REQUEST:\n%s", string(reqDump))
+
 	// check the status code
 	// it should be 200
 	if resp.StatusCode != 200 {
@@ -174,12 +181,6 @@ func (c *Client) CancelJobInstance(job string, job_id int) error {
 	if err != nil {
 		return err
 	}
-	if err != nil {
-        log.Fatal(err)
-    }
-
-	reqDump, err := httputil.DumpRequestOut(req, true)
-	fmt.Printf("REQUEST:\n%s", string(reqDump))
 
 	// check the status code
 	// it should be 201 - need to check this.
