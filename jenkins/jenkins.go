@@ -117,9 +117,9 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 }
 
 
-func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, error) {
+func (c *Client) GetJobInstance(job string, pr_number int) (int, error) {
 	// set up the request
-	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%v\"]][action/parameter[name=\"GIT_SHA1\"][value=\"%s\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, pr_number, sha)
+	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%v\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, pr_number)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -136,10 +136,6 @@ func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, err
 	}
 
 	reqDump, err := httputil.DumpRequestOut(req, true)
-    if err != nil {
-        log.Fatal(err)
-    }
-
 	fmt.Printf("REQUEST:\n%s", string(reqDump))
 
 	// check the status code
