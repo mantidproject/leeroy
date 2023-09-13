@@ -162,7 +162,7 @@ func (c *Client) CancelJobInstance(job string, job_id int) error {
 	log.Infof("cancelling job instance, job: %s, job number: %v", job, job_id)
 
 	// set up the request
-	url := fmt.Sprintf("%s/job/%s/%s/stop", c.Baseurl, job, job_id)
+	url := fmt.Sprintf("%s/job/%s/%v/stop", c.Baseurl, job, job_id)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return err
