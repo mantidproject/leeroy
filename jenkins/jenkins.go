@@ -179,8 +179,8 @@ func (c *Client) CancelJobInstance(job string, job_id int) error {
 	}
 
 	// check the status code
-	// it should be 201 - need to check this.
-	if resp.StatusCode != 201 {
+	// it should be 200
+	if resp.StatusCode != 200 {
 		return fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
 	}
 
