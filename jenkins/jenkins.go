@@ -125,9 +125,6 @@ func (c *Client) GetJobInstance(job string, pr_number int) (int, error) {
 		return 0, err
 	}
 
-	// add the auth - Not sure this will be needed for GET
-	req.SetBasicAuth(c.Username, c.Token)
-
 	// do the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -144,12 +141,12 @@ func (c *Client) GetJobInstance(job string, pr_number int) (int, error) {
 		return 0, fmt.Errorf("jenkins get to %s responded with status %d", url, resp.StatusCode)
 	}
 
+	// read then parse response for job id
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
 
-	//parse response for job id
 	var jobInstance = &JobInstance{}
 	if err := xml.Unmarshal(body, &jobInstance); err != nil {
 		panic(err)
