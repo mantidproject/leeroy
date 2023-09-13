@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"encoding/xml"
 	"io/ioutil"
-	"strconv"
 )
 
 type Client struct {
@@ -118,7 +117,7 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 
 func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, error) {
 	// set up the request
-	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%s\"]][action/parameter[name=\"GIT_SHA1\"][value=\"%s\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, strconv.Itoa(pr_number), sha)
+	url := fmt.Sprintf("%s/job/%s/api/xml?tree=builds[number,result,actions[parameters[name,value]]]&xpath=/freeStyleProject/build[action/parameter[name=\"PR\"][value=\"%v\"]][action/parameter[name=\"GIT_SHA1\"][value=\"%s\"]][not(result)]&wrapper=found_jobs", c.Baseurl, job, pr_number, sha)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return 0, err
@@ -137,7 +136,7 @@ func (c *Client) GetJobInstance(job string, pr_number int, sha string) (int, err
 	// check the status code
 	// it should be 201
 	if resp.StatusCode != 201 {
-		return 0, fmt.Errorf("jenkins post to %s responded with status %d", url, resp.StatusCode)
+		return 0, fmt.Errorf("jenkins post to %s responded with status - test %d", url, resp.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
