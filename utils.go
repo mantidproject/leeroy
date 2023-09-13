@@ -203,30 +203,27 @@ func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) err
 		return fmt.Errorf("repo name could not be parsed: %s", baseRepo)
 	}
 
-	// get the shas to build
-	shas, pr, err := c.getShas(r[0], r[1], build.Context, number)
+	// get pr - discard sha as we cancel all builds regardless of sha
+	_, pr, err := c.getShas(r[0], r[1], build.Context, number)
 	if err != nil {
 		return err
 	}
 
-	for _, sha := range shas {
+	// setup the jenkins client
+	j := &c.Jenkins
+	// cancel any existing builds
+	// get job ID
+	job_id, err := j.GetJobInstance(build.Job, pr.Number)
+	if err != nil {
+		return fmt.Errorf("error retrieving jenkins job instance: %v", err)
+	}
 
-		// setup the jenkins client
-		j := &c.Jenkins
-		// cancel any existing builds
-		// get job ID
-		job_id, err := j.GetJobInstance(build.Job, pr.Number, sha)
-		if err != nil {
-			return fmt.Errorf("error retrieving jenkins job instance: %v", err)
+	if job_id != 0 {
+		if err := j.CancelJobInstance(build.Job, job_id); err != nil {
+			return fmt.Errorf("error cancelling jenkins build: %v", err)
 		}
-
-		if job_id != 0 {
-			if err := j.CancelJobInstance(build.Job, job_id); err != nil {
-				return fmt.Errorf("error cancelling jenkins build: %v", err)
-			}
-		} else {
-			log.Infof("No job number found related to %s, %v, %s", build.Job, pr.Number, sha)
-		}
+	} else {
+		log.Infof("No job number found related to %s, %v", build.Job, pr.Number)
 	}
 
 	return nil
