@@ -204,7 +204,7 @@ func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) err
 	}
 
 	// get the shas to build
-	_, pr, err := c.getShas(r[0], r[1], build.Context, number)
+	shas, pr, err := c.getShas(r[0], r[1], build.Context, number)
 	if err != nil {
 		return err
 	}
@@ -215,7 +215,8 @@ func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) err
 		j := &c.Jenkins
 		// cancel any existing builds
 		// get job ID
-		if job_id, err := j.GetJobInstance(build.Job, pr.Number, sha); err != nil {
+		job_id, err := j.GetJobInstance(build.Job, pr.Number, sha)
+		if err != nil {
 			return fmt.Errorf("error retrieving jenkins job instance: %v", err)
 		}
 
