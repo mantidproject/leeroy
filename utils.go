@@ -224,6 +224,8 @@ func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) err
 			if err := j.CancelJobInstance(build.Job, job_id); err != nil {
 				return fmt.Errorf("error cancelling jenkins build: %v", err)
 			}
+		} else {
+			log.Infof("No job number found related to %s, %v, %s", build.Job, pr.Number, sha)
 		}
 	}
 
