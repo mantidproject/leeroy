@@ -144,12 +144,12 @@ func (c *Client) GetJobInstance(job string, pr_number int) (int, error) {
 	// read then parse response for job id
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	var jobInstance = &JobInstance{}
 	if err := xml.Unmarshal(body, &jobInstance); err != nil {
-		panic(err)
+		return 0, err
 	}
 
 	return jobInstance.Number, nil
