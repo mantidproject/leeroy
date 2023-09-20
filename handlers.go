@@ -188,6 +188,14 @@ retry:
 		return
 	}
 
+	// cancel existing jenkins builds associated with the job
+	for _, build := range builds {
+		if err := config.cancelJenkinsBuild(baseRepo, pr.Number, build); err != nil {
+			log.Error(err)
+			w.WriteHeader(500)
+		}
+	}
+
 	// schedule the jenkins builds
 	for _, build := range builds {
 		if !build.Downstream {

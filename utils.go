@@ -195,6 +195,40 @@ func (c Config) scheduleJenkinsBuild(baseRepo string, number int, build Build) e
 	return nil
 }
 
+func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) error {
+	// parse git repo for username
+	// and repo name
+	r := strings.SplitN(baseRepo, "/", 2)
+	if len(r) < 2 {
+		return fmt.Errorf("repo name could not be parsed: %s", baseRepo)
+	}
+
+	// get pr - discard sha as we cancel all builds regardless of sha
+	_, pr, err := c.getShas(r[0], r[1], build.Context, number)
+	if err != nil {
+		return err
+	}
+
+	// setup the jenkins client
+	j := &c.Jenkins
+	// cancel any existing builds
+	// get job ID
+	job_id, err := j.GetJobInstance(build.Job, pr.Number)
+	if err != nil {
+		return fmt.Errorf("error retrieving jenkins job instance: %v", err)
+	}
+
+	if job_id != 0 {
+		if err := j.CancelJobInstance(build.Job, job_id); err != nil {
+			return fmt.Errorf("error cancelling jenkins build: %v", err)
+		}
+	} else {
+		log.Infof("No job number found related to %s, %v", build.Job, pr.Number)
+	}
+
+	return nil
+}
+
 func (c Config) scheduleJenkinsDownstreamBuild(baseRepo string, headRepo string, number int, build Build, sha string) error {
 	// update the github status
 	if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl+"/job/"+build.Job); err != nil {
