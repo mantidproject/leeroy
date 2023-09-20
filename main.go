@@ -9,7 +9,7 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	"leeroy/jenkins"
+	"github.com/rosswhitfield/leeroy/jenkins"
 )
 
 const (
@@ -32,7 +32,6 @@ type Config struct {
 	Jenkins      jenkins.Client `json:"jenkins"`
 	BuildCommits string         `json:"build_commits"`
 	GHToken      string         `json:"github_token"`
-    GHUser       string         `json:"github_user"`
 	Builds       []Build        `json:"builds"`
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
