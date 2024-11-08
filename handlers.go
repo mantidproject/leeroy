@@ -145,13 +145,13 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-        g := github.GitHub{
-                AuthToken: config.GHToken,
-                User:      config.GHUser,
-        }
+	g := github.GitHub{
+			AuthToken: config.GHToken,
+			User:      config.GHUser,
+	}
 
 	attempt, totalAttempts := 1, 5
-        delay := time.Second
+	delay := time.Second
 retry:
         pullRequest, err := g.LoadPullRequest(prHook)
         if err != nil {
@@ -179,8 +179,14 @@ retry:
                w.WriteHeader(200)
                return
         }
-
-        // get the builds
+	
+	if !isValidMember(pr.User.Login) {
+		logrus.Errorf("Aborting! PR author '%s' is not a valid member of mantid-developers!", pr.User.Login)
+	    w.WriteHeader(500)
+		return
+	}
+	
+	// get the builds
 	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
 		log.Error(err)
@@ -207,6 +213,21 @@ retry:
 	}
 
 	return
+}
+
+func isValidMember(author string) bool {
+	orgName := "mantidproject"
+	teamName := "mantid-developers"
+	url := fmt.Sprintf("https://api.github.com/orgs/%s/teams/%s/memberships/%s", orgName, teamName, author)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Error("Error creating request: %v", err)
+		return false
+	}
+	req.Header.Add("Authorization", "Bearer "+config.GHToken)	
+	resp, err := client.Do(req)
+	return resp.StatusCode == http.StatusOK
 }
 
 type requestBuild struct {
