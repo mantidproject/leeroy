@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	log "github.com/sirupsen/logrus"
 )
 
 type Commit struct {
@@ -94,13 +94,11 @@ func hasStatus(gh *octokat.Client, repo octokat.Repo, sha, context string) bool 
 		log.Warnf("getting status for %s for %s/%s failed: %v", sha, repo.UserName, repo.Name, err)
 		return false
 	}
-
 	for _, status := range statuses {
 		if status.Context == context {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -277,9 +275,14 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 
 	for _, pr := range prs {
 		if !hasStatus(gh, repo, pr.Head.Sha, context) {
-			nums = append(nums, pr.Number)
+			if !hasStatus(gh, repo, pr.Head.Sha, "mantid/unauthorized") {
+				log.Debugf("PR with title=%s and sha=%s found with mantid/unauthorized issue", pr.Title, pr.Head.Sha)
+				nums = append(nums, pr.Number)
+			}
 		}
 	}
+
+	log.Debugf("Failed PR numbers = %v", nums)
 
 	return nums, nil
 }
