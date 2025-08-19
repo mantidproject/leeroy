@@ -8,8 +8,9 @@ import (
 	"net/http"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"leeroy/jenkins"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -32,10 +33,12 @@ type Config struct {
 	Jenkins      jenkins.Client `json:"jenkins"`
 	BuildCommits string         `json:"build_commits"`
 	GHToken      string         `json:"github_token"`
-    GHUser       string         `json:"github_user"`
+	GHUser       string         `json:"github_user"`
 	Builds       []Build        `json:"builds"`
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
+	OrgName      string         `json:"github_org_name"`
+	Teams        []string       `json:"github_teams"`
 }
 
 type Build struct {

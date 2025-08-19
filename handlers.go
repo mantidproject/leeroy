@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
-	"time"
-	"strconv"
 	"leeroy/github"
 	"leeroy/jenkins"
+	"net/http"
+	"strconv"
+	"time"
 
-    log "github.com/Sirupsen/logrus"
-    "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
+	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +73,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// get the build
-        build, err := config.getBuildByJob(j.Name)
+	build, err := config.getBuildByJob(j.Name)
 	if err != nil {
 		log.Error(err)
 		return
@@ -87,7 +87,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	if state == "success" {
 		for _, DownstreamBuild := range build.DownstreamBuilds {
 			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild, j.Build.Parameters.GitBaseRepo)
-		if err != nil {
+			if err != nil {
 				log.Error(err)
 				w.WriteHeader(500)
 				return
@@ -146,46 +146,49 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g := github.GitHub{
-			AuthToken: config.GHToken,
-			User:      config.GHUser,
+		AuthToken: config.GHToken,
+		User:      config.GHUser,
 	}
 
 	attempt, totalAttempts := 1, 5
 	delay := time.Second
 retry:
-        pullRequest, err := g.LoadPullRequest(prHook)
-        if err != nil {
-               logrus.Errorf("Error loading the pull request (attempt %d/%d): %v", attempt, totalAttempts, err)
-               if attempt <= totalAttempts && errors.Cause(err).Error() == "Not Found" {
-                       time.Sleep(delay)
-                       attempt++
-                       delay *= 2
-                       goto retry
-               }
-               w.WriteHeader(500)
-               return
-        }
-
-        mergeable, err := g.IsMergeable(pullRequest)
-        if err != nil {
-             logrus.Errorf("Error checking if PR is mergeable: %v", err)
-	                w.WriteHeader(500)
-			                return
-					        }
-
-        // PR is not mergeable, so don't start the build
-        if !mergeable {
-               logrus.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
-               w.WriteHeader(200)
-               return
-        }
-	
-	if !isValidMember(pr.User.Login) {
-		logrus.Errorf("Aborting! PR author '%s' is not a valid member of mantid-developers!", pr.User.Login)
-	    w.WriteHeader(500)
+	pullRequest, err := g.LoadPullRequest(prHook)
+	if err != nil {
+		logrus.Errorf("Error loading the pull request (attempt %d/%d): %v", attempt, totalAttempts, err)
+		if attempt <= totalAttempts && errors.Cause(err).Error() == "Not Found" {
+			time.Sleep(delay)
+			attempt++
+			delay *= 2
+			goto retry
+		}
+		w.WriteHeader(500)
 		return
 	}
-	
+
+	mergeable, err := g.IsMergeable(pullRequest)
+	if err != nil {
+		logrus.Errorf("Error checking if PR is mergeable: %v", err)
+		w.WriteHeader(500)
+		return
+	}
+
+	// PR is not mergeable, so don't start the build
+	if !mergeable {
+		logrus.Errorf("Unmergeable PR for %s #%d. Aborting build", baseRepo, pr.Number)
+		w.WriteHeader(200)
+		return
+	}
+
+	validity, _ := isValidMember(pr.User.Login)
+	if !validity {
+		logrus.Errorf("Aborting! PR author '%s' is not a valid member of mantid-developers!", pr.User.Login)
+		http.Error(w,
+			fmt.Sprintf("The CI workflow has not been triggered as %s is not an approved user. Please contact the mantid development team for more information", pr.User.Login),
+			http.StatusInternalServerError)
+		return
+	}
+
 	// get the builds
 	builds, err := config.getBuilds(baseRepo, false)
 	if err != nil {
@@ -215,19 +218,34 @@ retry:
 	return
 }
 
-func isValidMember(author string) bool {
-	orgName := "mantidproject"
-	teamName := "mantid-developers"
-	url := fmt.Sprintf("https://api.github.com/orgs/%s/teams/%s/memberships/%s", orgName, teamName, author)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Error("Error creating request: %v", err)
-		return false
+// Check whether the author of the PR is registered in a git hub team
+func isValidMember(author string) (bool, error) {
+	if len(config.Teams) == 0 {
+		log.Error("Teams are not defined!")
+		return true, nil
 	}
-	req.Header.Add("Authorization", "Bearer "+config.GHToken)	
-	resp, err := client.Do(req)
-	return resp.StatusCode == http.StatusOK
+
+	for _, teamName := range config.Teams {
+		url := fmt.Sprintf("https://api.github.com/orgs/%s/teams/%s/memberships/%s", config.OrgName, teamName, author)
+		client := &http.Client{}
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			log.Error("Error creating request: %v", err)
+			return false, err
+		}
+		req.Header.Add("Authorization", "Bearer "+config.GHToken)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Error("Error sending request: %v", err)
+			return false, err
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 type requestBuild struct {
