@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	"github.com/sirupsen/logrus"
 )
 
 func (g GitHub) addDCOUnsignedComment(repo octokat.Repo, pr *PullRequest, content *PullRequestContent) error {
@@ -33,7 +33,7 @@ The easiest way to do this is to amend the last commit:
 Amending updates the existing PR. You **DO NOT** need to open a new one.
 `
 
-	return g.addUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
+	return g.AddUniqueComment(repo, strconv.Itoa(pr.Number), comment, "sign your commits", content)
 }
 
 func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *PullRequestContent) error {
@@ -44,7 +44,7 @@ func (g GitHub) removeComment(repo octokat.Repo, commentType string, content *Pu
 	return nil
 }
 
-func (g GitHub) addUniqueComment(repo octokat.Repo, prNum, comment, commentType string, content *PullRequestContent) error {
+func (g GitHub) AddUniqueComment(repo octokat.Repo, prNum, comment, commentType string, content *PullRequestContent) error {
 	// check if we already made the comment
 	if content.AlreadyCommented(commentType, g.User) {
 		return nil

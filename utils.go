@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
+	log "github.com/sirupsen/logrus"
 )
 
 type Commit struct {

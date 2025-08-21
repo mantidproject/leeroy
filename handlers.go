@@ -10,10 +10,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	log "github.com/Sirupsen/logrus"
 	"github.com/crosbymichael/octokat"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func pingHandler(w http.ResponseWriter, r *http.Request) {
@@ -180,12 +180,27 @@ retry:
 		return
 	}
 
-	validity, _ := isValidMember(pr.User.Login)
-	if !validity {
-		logrus.Errorf("Aborting! PR author '%s' is not a valid member of mantid-developers!", pr.User.Login)
-		http.Error(w,
-			fmt.Sprintf("The CI workflow has not been triggered as %s is not an approved user. Please contact the mantid development team for more information", pr.User.Login),
-			http.StatusInternalServerError)
+	memberValidity, _ := isValidMember(pr.User.Login)
+	if !memberValidity {
+		logrus.Errorf("Aborting! PR author %s is not an approved user!", pr.User.Login)
+
+		// add a comment
+		comment := "The CI workflow has not been triggered as " + pr.User.Login + " is not an approved user. Please contact the mantid development team for more information"
+		commentType := "Unapproved user"
+		if err := g.AddUniqueComment(pullRequest.Repo, strconv.Itoa(prHook.Number), comment, commentType, pullRequest.Content); err != nil {
+			logrus.Errorf("Failed to add a unique comment '%s'", comment)
+			w.WriteHeader(500)
+			return
+		}
+
+		// set the PR status as failed
+		if err := g.FailureStatus(pullRequest.Repo, pr.Head.Sha, "mantid/is-mergable", comment, "https://github.com/mantidproject/mantid/pulls/"); err != nil {
+			logrus.Errorf("Failed to set failed status '%s'", comment)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(500)
 		return
 	}
 
