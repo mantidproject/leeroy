@@ -2,11 +2,12 @@ package github
 
 import "github.com/crosbymichael/octokat"
 
-func (g GitHub) successStatus(repo octokat.Repo, sha, context, description string) error {
+func (g GitHub) SuccessStatus(repo octokat.Repo, sha, context, description string, targetURL string) error {
 	_, err := g.Client().SetStatus(repo, sha, &octokat.StatusOptions{
 		State:       "success",
 		Context:     context,
 		Description: description,
+		URL:         targetURL,
 	})
 	return err
 }

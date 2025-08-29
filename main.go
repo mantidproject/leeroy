@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -38,6 +37,7 @@ type Config struct {
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
 	OrgName      string         `json:"github_org_name"`
+	BaseRepoName string         `json:"base_repo_name"`
 	Teams        []string       `json:"github_teams"`
 }
 
@@ -78,7 +78,7 @@ func main() {
 		log.Errorf("config file does not exist: %s", configFile)
 		return
 	}
-	c, err := ioutil.ReadFile(configFile)
+	c, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Errorf("could not read config file: %v", err)
 		return
