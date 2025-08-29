@@ -80,10 +80,7 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// update the github status
 	if err := config.updateGithubStatus(j.Build.Parameters.GitBaseRepo, build.Context, j.Build.Parameters.GitSha, state, desc, j.Build.Url); err != nil {
-
-		log.Debugf("config.updateGithubStatus error %s", err)
-
-		log.Error(err)
+		log.Errorf("config.updateGithubStatus error %v", err)
 	}
 
 	if state == "success" {
