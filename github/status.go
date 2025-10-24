@@ -21,3 +21,13 @@ func (g GitHub) FailureStatus(repo octokat.Repo, sha, context, description, targ
 	})
 	return err
 }
+
+func (g GitHub) PendingStatus(repo octokat.Repo, sha, context, description, targetURL string) error {
+	_, err := g.Client().SetStatus(repo, sha, &octokat.StatusOptions{
+		State:       "pending",
+		Context:     context,
+		Description: description,
+		URL:         targetURL,
+	})
+	return err
+}

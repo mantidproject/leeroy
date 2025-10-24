@@ -48,6 +48,7 @@ type Build struct {
 	Custom           bool     `json:"custom"`
 	Downstream       bool     `json:"downstream"`
 	DownstreamBuilds []string `json:"downstream_builds"`
+	ExcludeTargets   []string `json:"exclude_targets"`
 }
 
 func init() {

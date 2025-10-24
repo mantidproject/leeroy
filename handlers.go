@@ -84,17 +84,27 @@ func jenkinsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if state == "success" {
-		for _, DownstreamBuild := range build.DownstreamBuilds {
-			BuildDownstream, err := config.getBuildByContextAndRepo(DownstreamBuild, j.Build.Parameters.GitBaseRepo)
+		for _, DownstreamBuildContext := range build.DownstreamBuilds {
+			DownstreamBuild, err := config.getBuildByContextAndRepo(DownstreamBuildContext, j.Build.Parameters.GitBaseRepo)
 			if err != nil {
 				log.Error(err)
-				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			pr_number, _ := strconv.Atoi(j.Build.Parameters.PR)
-			if err := config.scheduleJenkinsDownstreamBuild(BuildDownstream.Repo, j.Build.Parameters.GitHeadRepo, pr_number, BuildDownstream, j.Build.Parameters.GitSha); err != nil {
-				log.Error(err)
-				w.WriteHeader(http.StatusInternalServerError)
+			skip_build := false
+			for _, excludeTarget := range DownstreamBuild.ExcludeTargets {
+				if excludeTarget == j.Build.Parameters.BaseBranch {
+					log.Infof("Skipping build due to excluded target: %s", excludeTarget)
+					skip_build = true
+					break
+				}
+			}
+
+			if !skip_build {
+				pr_number, _ := strconv.Atoi(j.Build.Parameters.PR)
+				if err := config.scheduleJenkinsDownstreamBuild(DownstreamBuild.Repo, j.Build.Parameters.GitHeadRepo, pr_number, DownstreamBuild, j.Build.Parameters.GitSha, j.Build.Parameters.BaseBranch); err != nil {
+					log.Error(err)
+					w.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 		}
 	}
@@ -186,9 +196,10 @@ retry:
 		return
 	}
 
+	// Author is not authorized, so don't start the build
 	if !checkIsAuthorizedPRAuthor(prHook, pullRequest, g) {
 		getBuildsWhileCancellingExisting(baseRepo, prHook.Number)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -243,7 +254,7 @@ func checkIsAuthorizedPRAuthor(prHook *octokat.PullRequestHook, pullRequest *git
 		log.Errorf("Aborting! PR author %s is not an approved user! %v", pr.User.Login, err)
 
 		// Add a comment to the PR
-		comment := "The CI workflow has not been triggered as " + pr.User.Login + " is NOT an approved user. Please contact the mantid development team for more information"
+		comment := "Thanks for your submission, " + pr.User.Login + ". Tests can only be initiated by an authorized member of the Mantid team. Please contact us for assistance."
 		commentType := "Unapproved user"
 		if err := g.AddUniqueComment(pullRequest.Repo, strconv.Itoa(prHook.Number), comment, commentType, pullRequest.Content); err != nil {
 			log.Errorf("Failed to add a unique comment '%s': %v", comment, err)
@@ -252,14 +263,14 @@ func checkIsAuthorizedPRAuthor(prHook *octokat.PullRequestHook, pullRequest *git
 
 		prRepoURL := fmt.Sprintf("https://github.com/%s/%s/pulls/", config.OrgName, config.BaseRepoName)
 
-		// Set the PR status as failed
-		if err := g.FailureStatus(pullRequest.Repo, pr.Head.Sha, "mantid/unauthorized",
-			"This PR is Unauthorized! Please contact the mantid development team", prRepoURL); err != nil {
+		// Set the PR status as pending
+		if err := g.PendingStatus(pullRequest.Repo, pr.Head.Sha, "mantid/unauthorized",
+			"Please contact the mantid team to run tests", prRepoURL); err != nil {
 			log.Errorf("Failed to set failed status: %v", err)
 			return false
 		}
 
-		log.Debugf("Successfully set PR status as failed for %s, %s", pullRequest.Repo.Name, pullRequest.Repo.UserName)
+		log.Debugf("Successfully set PR status as pending for %s, %s", pullRequest.Repo.Name, pullRequest.Repo.UserName)
 		return false
 	}
 	return true
@@ -436,8 +447,8 @@ func handlePullRequestReview(w http.ResponseWriter, body []byte) {
 
 		// Check if reviewer is an approved user
 		if isValid, _ := isValidMember(reviewHook.Review.User.Login); isValid {
-			//set any past authentication failue as passed
-			setFailedValidationPassed(reviewHook)
+			//set any past authentication check as passed
+			setValidationCheckPassed(reviewHook)
 			baseRepo := fmt.Sprintf("%s/%s", reviewHook.Repository.Owner.Login, reviewHook.Repository.Name)
 
 			//Upon this approval kick start the full CI back
@@ -458,7 +469,7 @@ func handlePullRequestReview(w http.ResponseWriter, body []byte) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func setFailedValidationPassed(hook PullRequestReviewHook) {
+func setValidationCheckPassed(hook PullRequestReviewHook) {
 	gh := github.GitHub{
 		AuthToken: config.GHToken,
 		User:      config.GHUser,
@@ -477,7 +488,7 @@ func setFailedValidationPassed(hook PullRequestReviewHook) {
 		return
 	}
 
-	log.Debugf("PR head sha=%s, repo name=%s, username=%s", pr.Head.Sha, repo.Name, repo.UserName)
+	log.Infof("PR head sha=%s, repo name=%s, username=%s", pr.Head.Sha, repo.Name, repo.UserName)
 
 	prRepoURL := fmt.Sprintf("https://github.com/%s/%s/pulls/", config.OrgName, config.BaseRepoName)
 	if err := gh.SuccessStatus(repo,

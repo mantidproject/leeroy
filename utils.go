@@ -227,7 +227,7 @@ func (c Config) cancelJenkinsBuild(baseRepo string, number int, build Build) err
 	return nil
 }
 
-func (c Config) scheduleJenkinsDownstreamBuild(baseRepo string, headRepo string, number int, build Build, sha string) error {
+func (c Config) scheduleJenkinsDownstreamBuild(baseRepo string, headRepo string, number int, build Build, sha string, baseBranch string) error {
 	// update the github status
 	if err := c.updateGithubStatus(baseRepo, build.Context, sha, "pending", "Jenkins build is being scheduled", c.Jenkins.Baseurl+"/job/"+build.Job); err != nil {
 		return err
@@ -237,7 +237,7 @@ func (c Config) scheduleJenkinsDownstreamBuild(baseRepo string, headRepo string,
 	j := &c.Jenkins
 	// setup the parameters
 	htmlUrl := fmt.Sprintf("https://github.com/%s/pull/%d", baseRepo, number)
-	parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d", baseRepo, headRepo, sha, htmlUrl, number)
+	parameters := fmt.Sprintf("GIT_BASE_REPO=%s&GIT_HEAD_REPO=%s&GIT_SHA1=%s&GITHUB_URL=%s&PR=%d&BASE_BRANCH=%s", baseRepo, headRepo, sha, htmlUrl, number, baseBranch)
 	// schedule the build
 	if err := j.BuildWithParameters(build.Job, parameters); err != nil {
 		return fmt.Errorf("scheduling jenkins build failed: %v", err)
@@ -275,14 +275,9 @@ func (c Config) getFailedPRs(context, repoName string) (nums []int, err error) {
 
 	for _, pr := range prs {
 		if !hasStatus(gh, repo, pr.Head.Sha, context) {
-			if !hasStatus(gh, repo, pr.Head.Sha, "mantid/unauthorized") {
-				log.Debugf("PR with title=%s and sha=%s found with mantid/unauthorized issue", pr.Title, pr.Head.Sha)
-				nums = append(nums, pr.Number)
-			}
+			nums = append(nums, pr.Number)
 		}
 	}
-
 	log.Debugf("Failed PR numbers = %v", nums)
-
 	return nums, nil
 }

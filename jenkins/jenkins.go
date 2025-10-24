@@ -36,6 +36,7 @@ type JenkinsBuildParameters struct {
 	GitHeadRepo string `json:"GIT_HEAD_REPO"`
 	GitSha      string `json:"GIT_SHA1"`
 	PR          string `json:"PR"`
+	BaseBranch  string `json:"BASE_BRANCH"`
 }
 
 type Request struct {
