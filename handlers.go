@@ -263,14 +263,14 @@ func checkIsAuthorizedPRAuthor(prHook *octokat.PullRequestHook, pullRequest *git
 
 		prRepoURL := fmt.Sprintf("https://github.com/%s/%s/pulls/", config.OrgName, config.BaseRepoName)
 
-		// Set the PR status as pending
-		if err := g.PendingStatus(pullRequest.Repo, pr.Head.Sha, "mantid/unauthorized",
+		// Set the PR status as Failed
+		if err := g.FailureStatus(pullRequest.Repo, pr.Head.Sha, "mantid/unauthorized",
 			"Please contact the mantid team to run tests", prRepoURL); err != nil {
 			log.Errorf("Failed to set failed status: %v", err)
 			return false
 		}
 
-		log.Debugf("Successfully set PR status as pending for %s, %s", pullRequest.Repo.Name, pullRequest.Repo.UserName)
+		log.Debugf("Successfully set PR status as failed for %s, %s", pullRequest.Repo.Name, pullRequest.Repo.UserName)
 		return false
 	}
 	return true
