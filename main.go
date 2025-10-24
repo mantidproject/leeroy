@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"leeroy/jenkins"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -32,10 +32,13 @@ type Config struct {
 	Jenkins      jenkins.Client `json:"jenkins"`
 	BuildCommits string         `json:"build_commits"`
 	GHToken      string         `json:"github_token"`
-    GHUser       string         `json:"github_user"`
+	GHUser       string         `json:"github_user"`
 	Builds       []Build        `json:"builds"`
 	User         string         `json:"user"`
 	Pass         string         `json:"pass"`
+	OrgName      string         `json:"github_org_name"`
+	BaseRepoName string         `json:"base_repo_name"`
+	Teams        []string       `json:"github_teams"`
 }
 
 type Build struct {
@@ -45,6 +48,7 @@ type Build struct {
 	Custom           bool     `json:"custom"`
 	Downstream       bool     `json:"downstream"`
 	DownstreamBuilds []string `json:"downstream_builds"`
+	ExcludeTargets   []string `json:"exclude_targets"`
 }
 
 func init() {
@@ -75,7 +79,7 @@ func main() {
 		log.Errorf("config file does not exist: %s", configFile)
 		return
 	}
-	c, err := ioutil.ReadFile(configFile)
+	c, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Errorf("could not read config file: %v", err)
 		return

@@ -3,7 +3,7 @@ package github
 import (
 	"strconv"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // IsMergeable makes sure the pull request can be merged
@@ -24,13 +24,13 @@ func (g GitHub) IsMergeable(pr *PullRequest) (mergeable bool, err error) {
 
 		// add a comment
 		comment := "Looks like we would not be able to merge this PR because of merge conflicts. Please fix conflicts, and push to your branch."
-		if err := g.addUniqueComment(pr.Repo, strconv.Itoa(pr.Hook.Number), comment, commentType, pr.Content); err != nil {
+		if err := g.AddUniqueComment(pr.Repo, strconv.Itoa(pr.Hook.Number), comment, commentType, pr.Content); err != nil {
 			return mergeable, err
 		}
 
 		// set the status
 		// TODO for context do we want "mantid/is-mergable" or something else?
-		if err := g.failureStatus(pr.Repo, pr.Head.Sha, "mantid/is-mergable", "This PR is not mergable, please fix conflicts.", "https://github.com/mantidproject/mantid/pulls/"); err != nil {
+		if err := g.FailureStatus(pr.Repo, pr.Head.Sha, "mantid/is-mergable", "This PR is not mergable, please fix conflicts.", "https://github.com/mantidproject/mantid/pulls/"); err != nil {
 			return mergeable, err
 		}
 

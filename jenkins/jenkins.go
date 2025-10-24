@@ -3,12 +3,13 @@ package jenkins
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
-	log "github.com/Sirupsen/logrus"
+	"net/http"
 	"net/http/httputil"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -35,6 +36,7 @@ type JenkinsBuildParameters struct {
 	GitHeadRepo string `json:"GIT_HEAD_REPO"`
 	GitSha      string `json:"GIT_SHA1"`
 	PR          string `json:"PR"`
+	BaseBranch  string `json:"BASE_BRANCH"`
 }
 
 type Request struct {
@@ -42,7 +44,7 @@ type Request struct {
 }
 
 type JobInstance struct {
-    Number int `xml:"build>number"`
+	Number int `xml:"build>number"`
 }
 
 // Sets the authentication for the Jenkins client
@@ -115,7 +117,6 @@ func (c *Client) BuildWithParameters(job string, parameters string) error {
 
 	return nil
 }
-
 
 func (c *Client) GetJobInstance(job string, pr_number int) (int, error) {
 	// set up the request
